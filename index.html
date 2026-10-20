@@ -70,6 +70,8 @@ textarea{resize:vertical}
 .c-cost{grid-column:6 / 8;grid-row:2}
 .c-memo:empty,.c-cost:empty{display:none}
 .c-cost b{font-weight:500;color:var(--accent);white-space:nowrap}
+.c-cost{display:flex;flex-wrap:wrap;justify-content:flex-end;column-gap:12px}
+.c-cost span{white-space:nowrap}
 .c-cost b.neg{color:var(--danger)}
 .pf{font-size:13px;color:var(--muted)}
 .total-line .pf b{font-family:var(--font);font-size:14px;color:var(--accent);font-weight:500}
@@ -77,7 +79,7 @@ textarea{resize:vertical}
 .total-line .pf{margin-right:auto}
 @media (max-width:640px){
   .ihead{display:none}
-  .irow{grid-template-columns:22px repeat(4,minmax(0,1fr));
+  .irow{grid-template-columns:22px minmax(0,1.35fr) repeat(3,minmax(0,1fr));
     grid-template-areas:"ix no name name name" "ix spec qty price sum" "ix cost cost cost cost" "ix memo memo memo memo" "ix hist hist hist hist";
     padding:8px 0;border-bottom:1px solid var(--line)}
   .ix{grid-area:ix;align-self:start;padding-top:8px}
@@ -208,6 +210,7 @@ table.sqt tr:last-child td{border-bottom:0}
 /* 品號清除鈕 */
 .c-now{position:relative;min-width:0;display:block}
 .c-now input{padding-right:28px}
+@media (max-width:640px){.c-now input{padding-right:22px;padding-left:6px}.clr{width:22px;right:0}}
 .clr{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:0;border-radius:50%;background:none;color:var(--muted);font-size:17px;line-height:1;cursor:pointer;padding:0}
 .clr:hover,.clr:focus-visible{background:var(--accent-soft);color:var(--danger);outline:none}
 /* 運送方法 */
@@ -244,6 +247,22 @@ ul.rcv{list-style:none;margin:0;padding:0}
 .tpl{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:13px;color:var(--muted)}
 .tpl a{color:var(--accent);border:1px solid var(--line);border-radius:99px;padding:3px 12px;text-decoration:none;background:var(--field)}
 .tpl a:hover{border-color:var(--accent)}
+
+/* 公司模式：身分確認畫面 */
+.gate{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;
+  padding:calc(env(safe-area-inset-top,0px) + 24px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 24px) max(16px,env(safe-area-inset-left,0px));overflow-y:auto}
+.gate-box{width:min(440px,100%);background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px 22px;display:flex;flex-direction:column;gap:14px;text-align:center}
+.gate-mark{align-self:center;width:56px;height:56px;border-radius:14px;background:#06c755;color:#fff;font:700 13px/56px var(--font);letter-spacing:.04em}
+.gate-box h2{margin:0;font-size:19px;text-wrap:balance}
+.gate-msg{margin:0;color:var(--muted);font-size:14px;line-height:1.7;white-space:pre-line}
+.gate-id{display:flex;flex-direction:column;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:12px}
+.gate-lbl{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.gate-id code{font-family:var(--mono);font-size:13px;word-break:break-all;user-select:all;color:var(--ink)}
+.gate-acts{display:flex;flex-direction:column;gap:8px}
+.btn.line{background:#06c755;border-color:#06c755;color:#fff;font-weight:500;padding:11px 16px;font-size:15px}
+.who{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--accent);background:var(--accent-soft);border-radius:99px;padding:5px 12px}
+.who::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.who.off{color:var(--muted);background:var(--field)}
 
 /* ===== 訂單紙本（A4 一頁兩張），永遠黑白 ===== */
 #stage{position:fixed;left:-12000px;top:0}
@@ -297,6 +316,7 @@ table.it tr.tot td.cont{font-weight:400;font-size:3mm;letter-spacing:0;text-alig
 <header class="top">
   <div class="ttl"><h1 id="appTitle">訂貨單</h1><span class="sub">資料只存在這台裝置的瀏覽器裡</span></div>
   <div class="toolbar">
+    <span class="who" id="whoBadge" hidden></span>
     <button class="btn" id="salesBtn" type="button" hidden>銷售記錄</button>
     <button class="btn pri" id="newBtn" type="button">＋ 新增訂單</button>
   </div>
@@ -327,6 +347,11 @@ table.it tr.tot td.cont{font-weight:400;font-size:3mm;letter-spacing:0;text-alig
       <summary><h2>資料檔</h2><span class="pstat" id="dStat">尚未載入</span></summary>
       <div class="pbody">
         <div class="dslist" id="dsList"></div>
+        <div class="cmp" id="companyData" hidden>
+          <div class="prow"><button class="btn pri" id="cSync" type="button">立即同步公司資料</button><button class="btn" id="cLeave" type="button">離開公司模式</button></div>
+          <p class="hint">公司模式由主管管理資料：開啟時會自動檢查 4 個資料檔有沒有更新，有變動的才下載。帳號被停用時，這台裝置上的公司資料會自動清除。</p>
+        </div>
+        <div id="manualData">
         <label class="f">Google 試算表網址
           <input id="dUrl" type="url" inputmode="url" placeholder="https://docs.google.com/spreadsheets/d/…" autocomplete="off">
         </label>
@@ -344,6 +369,8 @@ table.it tr.tot td.cont{font-weight:400;font-size:3mm;letter-spacing:0;text-alig
         </div>
         <p class="hint">可以給單一資料檔，也可以給包含全部工作表的檔案。網頁會依標題列自動判斷是哪一種資料，只覆蓋檔案裡有的那幾種，其他維持原本存在這台裝置的版本。沒有載入的資料就改用手填。<br>
         資料和網址只存在這台裝置的瀏覽器，不會放到 GitHub。試算表需設為「知道連結的任何人都能檢視」；不想公開連結的話，可以下載成 Excel 再用「匯入檔案」。</p>
+        </div>
+        <div class="status" id="cMsg" role="status" aria-live="polite"></div>
       </div>
     </details>
   </div>
@@ -441,6 +468,20 @@ table.it tr.tot td.cont{font-weight:400;font-size:3mm;letter-spacing:0;text-alig
   </section>
 </dialog>
 
+<div class="gate" id="gate" hidden role="dialog" aria-modal="true" aria-labelledby="gateTitle">
+  <div class="gate-box">
+    <div class="gate-mark" aria-hidden="true">LINE</div>
+    <h2 id="gateTitle">正在確認 LINE 身分…</h2>
+    <p class="gate-msg" id="gateMsg"></p>
+    <div class="gate-id" id="gateIdBox" hidden>
+      <span class="gate-lbl">你的 LINE userId</span>
+      <code id="gateId"></code>
+      <button class="btn pri" id="gateCopy" type="button">複製 userId</button>
+    </div>
+    <div class="gate-acts" id="gateActs"></div>
+  </div>
+</div>
+
 <div id="stage" aria-hidden="true"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -483,8 +524,16 @@ const profitOf = it => {
   if (!q || p == null || c == null) return null;
   const revenue = p * q.paid * 0.95, totalCost = c * (q.paid + q.free);
   const profit = revenue - totalCost;
-  return { cost: c, totalCost, profit, rate: totalCost ? profit / totalCost * 100 : null };
+  return { cost: c, totalCost, profit, rate: totalCost ? profit / totalCost * 100 : null, units: q.paid + q.free };
 };
+/* 單位利潤：數量 1 時，單價 × 0.95 − 成本 */
+const unitProfitOf = it => {
+  const p = num(it.price), c = num(it.cost);
+  if (p == null || c == null) return null;
+  const profit = p * 0.95 - c;
+  return { profit, rate: c ? profit / c * 100 : null };
+};
+const money = n => fmt(Math.round(n * 10) / 10);
 const pct = r => r == null ? '' : `${Math.round(r)}%`;
 const fmt = n => n == null ? '' : n.toLocaleString('zh-TW', { maximumFractionDigits: 2 });
 const orderTotal = o => o.items.reduce((s, it) => s + (amount(it) || 0), 0);
@@ -552,15 +601,17 @@ function recalc() {
     const it = {}; row.querySelectorAll('input').forEach(inp => { it[inp.dataset.k] = inp.value; });
     const a = amount(it); row.querySelector('.c-sum').textContent = fmt(a); total += a || 0;
     const pr = profitOf(it), c = num(it.cost);
-    row.querySelector('.c-cost').innerHTML = pr
-      ? `成本 ${fmt(pr.cost)}元　利潤= <b class="${pr.profit < 0 ? 'neg' : ''}">${fmt(Math.round(pr.profit))}元 ${pct(pr.rate)}</b>`
-      : (c != null ? `成本 ${fmt(c)}元` : '');
+    const up = unitProfitOf(it), neg = v => v < 0 ? 'neg' : '';
+    row.querySelector('.c-cost').innerHTML = c == null ? '' :
+      `<span>成本 ${fmt(c)}元</span>` +
+      (up ? `<span>單位利潤 <b class="${neg(up.profit)}">${money(up.profit)}元 ${pct(up.rate)}</b></span>` : '') +
+      (pr ? `<span>總利潤 <b class="${neg(pr.profit)}">${money(pr.profit)}元 ${pct(pr.rate)}</b>${pr.units !== 1 ? `（${fmt(pr.units)}個）` : ''}</span>` : '');
     row.querySelector('.c-memo').textContent = it.memo ? `Memo：${it.memo}` : '';
     row.querySelector('.c-hist').innerHTML = histHTML(it.no);
     if (pr) { profit += pr.profit; cost += pr.totalCost; has = true; }
   });
   $('#f_total').textContent = fmt(total);
-  $('#f_profit').innerHTML = has ? `利潤= <b class="${profit < 0 ? 'neg' : ''}">${fmt(Math.round(profit))}元 ${pct(cost ? profit / cost * 100 : null)}</b>` : '';
+  $('#f_profit').innerHTML = has ? `整張訂單利潤 <b class="${profit < 0 ? 'neg' : ''}">${money(profit)}元 ${pct(cost ? profit / cost * 100 : null)}</b>` : '';
 }
 function updateRoc() { F('roc').textContent = rocText(F('date').value || todayISO()); }
 
@@ -941,8 +992,8 @@ function updateDerived() {
   }
   salesCustList = [...sc.values()]; salesProdList = [...sp.values()];
 }
-async function applyData(type, parsed, src) {
-  const d = { src, updated: Date.now(), count: parsed.count, items: parsed.items };
+async function applyData(type, parsed, src, ver) {
+  const d = { src, updated: Date.now(), count: parsed.count, items: parsed.items, ver: ver ?? null };
   data[type] = d; rebuildIndex(type); updateDerived();
   if (!(await idb.set(type, d))) say('#dMsg', `${DS[type].label}存不進這台裝置（空間不足或無痕模式），這次可以用，關閉頁面後要重新載入。`, true);
 }
@@ -999,12 +1050,12 @@ async function readFileTables(file) {
 }
 
 const when = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())} 更新`; };
-const srcLabel = s => /^https?:/.test(s) ? 'Google 試算表（' + ((s.match(/\/d\/([\w-]+)/) || [])[1] || '').slice(0, 8) + '…）' : s.replace(/^file:/, '檔案 ');
+const srcLabel = s => s === 'gas' ? '公司資料（LINE 認證）' : /^https?:/.test(s) ? 'Google 試算表（' + ((s.match(/\/d\/([\w-]+)/) || [])[1] || '').slice(0, 8) + '…）' : s.replace(/^file:/, '檔案 ');
 function renderData() {
   $('#dsList').innerHTML = Object.keys(DS).map(k => {
     const d = data[k], ok = d && d.count;
-    return `<div class="ds" data-ds="${k}"><div><b>${DS[k].label}</b><span class="dsn${ok ? ' ok' : ''}">${ok ? `${d.count.toLocaleString()} ${DS[k].unit}・${when(d.updated)}` : '未載入，改用手填'}</span></div>` +
-      `<div class="dsa">${ok && /^https?:/.test(d.src) ? '<button class="btn sm" data-act="re" type="button">重新下載</button>' : ''}${ok ? '<button class="btn sm" data-act="clr" type="button">清除</button>' : ''}</div>` +
+    return `<div class="ds" data-ds="${k}"><div><b>${DS[k].label}</b><span class="dsn${ok ? ' ok' : ''}">${ok ? `${d.count.toLocaleString()} ${DS[k].unit}・${when(d.updated)}` : (company ? '公司未提供，改用手填' : '未載入，改用手填')}</span></div>` +
+      `<div class="dsa">${ok && /^https?:/.test(d.src) ? '<button class="btn sm" data-act="re" type="button">重新下載</button>' : ''}${ok && !company ? '<button class="btn sm" data-act="clr" type="button">清除</button>' : ''}</div>` +
       (ok && d.src ? `<div class="dss">來源：${esc(srcLabel(d.src))}</div>` : '') + '</div>';
   }).join('');
   const n = Object.values(data).filter(d => d && d.count).length, el = $('#dStat');
@@ -1380,6 +1431,145 @@ $('#listDate').value = todayISO();
 $('#dUrl').value = prefs.dataUrl || prefs.prodUrl || '';
 renderData();
 resetForm();
+/* ===================== 公司模式：LINE 登入 → GAS 驗證授權 → 同步公司資料 =====================
+   啟用方式：從 LIFF 網址開啟（網址帶 ?company=1），設定寫在同一個 repo 的 company.json。
+   GAS 網址只從 company.json 讀，不接受網址參數，避免假連結把 LINE 憑證送到別的地方。 */
+const CSTATE = 'jl_company_v1';
+var company = null;          // { liffId, gasUrl } 公司模式設定（var：啟動時 renderData 會先用到）
+let companyUser = null;      // 驗證通過的使用者
+const LIFF_SDK = 'https://static.line-scdn.net/liff/edge/2/sdk.js';
+const OFFLINE_DAYS = 30;     // 連不上 GAS 時，最近 30 天內驗證過就先用本機資料
+
+function wantsCompany() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('company') === '1') return true;
+  const st = q.get('liff.state');   // 從 liff.line.me/{liffId}?company=1 進來時，參數會包在 liff.state 裡
+  if (st && new URLSearchParams(st.replace(/^[^?]*\?/, '')).get('company') === '1') return true;
+  return !!(store.get(CSTATE, {}) || {}).on;
+}
+async function loadCompanyConfig() {
+  try {
+    const r = await fetch('company.json', { cache: 'no-store' }); if (!r.ok) return null;
+    const c = await r.json();
+    if (!c || !c.liffId || !/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(c.gasUrl || '')) return null;
+    return { liffId: String(c.liffId), gasUrl: c.gasUrl };
+  } catch (e) { return null; }
+}
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('LINE 元件載入失敗，請確認網路')); document.head.appendChild(s); });
+}
+
+/* 身分確認畫面 */
+function gate(state, opts = {}) {
+  const g = $('#gate'), acts = $('#gateActs');
+  g.hidden = state === 'off';
+  if (state === 'off') return;
+  const T = {
+    checking: ['正在確認 LINE 身分…', ''],
+    login: ['請先用 LINE 登入', '在 LINE 裡打開會自動登入。\n用一般瀏覽器開啟時，請按下方按鈕登入。'],
+    unauth: ['帳號尚未開通', '請複製下方的 userId 傳給主管開通。\n開通後回到這裡按「重新檢查」。'],
+    error: ['無法完成驗證', opts.msg || '請確認網路後再試一次。']
+  }[state];
+  $('#gateTitle').textContent = T[0];
+  $('#gateMsg').textContent = (opts.name ? `${opts.name}，` : '') + T[1];
+  $('#gateIdBox').hidden = !opts.userId; $('#gateId').textContent = opts.userId || '';
+  acts.innerHTML = '';
+  const btn = (label, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ' + cls; b.textContent = label; b.onclick = fn; acts.appendChild(b); };
+  if (state === 'login') btn('使用 LINE 登入', 'line', () => window.liff.login({ redirectUri: location.href }));
+  if (state === 'unauth') btn('重新檢查', '', () => companyStart());
+  if (state === 'error') {
+    btn('重試', 'pri', () => companyStart());
+    if (opts.offline) btn('先用這台裝置上的資料', '', () => { gate('off'); setWho(opts.offline, true); });
+    if (opts.relogin) btn('重新登入 LINE', 'line', () => { try { window.liff.logout(); } catch (e) {} window.liff.login({ redirectUri: location.href }); });
+  }
+}
+$('#gateCopy').addEventListener('click', async () => {
+  const id = $('#gateId').textContent, b = $('#gateCopy');
+  try { await navigator.clipboard.writeText(id); b.textContent = '已複製'; }
+  catch (e) { const r = document.createRange(); r.selectNodeContents($('#gateId')); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); b.textContent = '已選取，請長按複製'; }
+  setTimeout(() => { b.textContent = '複製 userId'; }, 2500);
+});
+function setWho(u, offline) {
+  const b = $('#whoBadge'); b.hidden = !u;
+  if (!u) return;
+  b.textContent = `${u.name || 'LINE 使用者'}・${offline ? '離線使用' : '已認證'}`; b.classList.toggle('off', !!offline);
+}
+
+async function gasCall(payload) {
+  const idToken = window.liff.getIDToken();
+  if (!idToken) throw Object.assign(new Error('拿不到 LINE 身分憑證。請主管到 LINE Developers 的 LIFF 設定勾選 openid 權限。'), { code: 'noscope' });
+  let r;
+  try {
+    r = await fetch(company.gasUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ ...payload, idToken }) });
+  } catch (e) { throw Object.assign(new Error('連不上公司伺服器'), { code: 'network' }); }
+  const j = await r.json().catch(() => null);
+  if (!j) throw Object.assign(new Error('公司伺服器回應格式不對'), { code: 'server' });
+  if (!j.ok) throw Object.assign(new Error(j.error === 'token' ? 'LINE 登入已過期，請重新登入。' : (j.message || '公司伺服器回報錯誤')), { code: j.error || 'server' });
+  return j;
+}
+async function wipeCompanyData() {
+  for (const k of Object.keys(DS)) if (data[k] && data[k].src === 'gas') await clearData(k);
+  renderData(); recalc(); showCustInfo();
+}
+function parseKnown(type, rows) {
+  const d = detect(rows);
+  const h = d ? d.h : 0, hdr = (rows[h] || []).map(x => String(x ?? '').trim());
+  return PARSE[type](rows, h, hdr);
+}
+async function companySync(force) {
+  const meta = await gasCall({ action: 'meta' });
+  if (!meta.authorized) {
+    companyUser = null; setWho(null);
+    store.set(CSTATE, { on: true });
+    await wipeCompanyData();
+    gate('unauth', { userId: meta.userId, name: meta.name });
+    return false;
+  }
+  companyUser = { userId: meta.userId, name: meta.name, empNo: meta.empNo || '' };
+  store.set(CSTATE, { on: true, user: companyUser, authAt: Date.now() });
+  gate('off'); setWho(companyUser);
+  // 姓名、員工編號（線別）由授權名單帶入
+  if (companyUser.empNo && !prefs.line) prefs.line = companyUser.empNo;
+  if (companyUser.name && !prefs.name) prefs.name = companyUser.name;
+  store.set(PKEY, prefs);
+  if (!editingId) { if (!F('line').value) F('line').value = prefs.line || ''; if (!F('name').value) F('name').value = prefs.name || ''; }
+  const v = meta.versions || {};
+  for (const k of Object.keys(DS)) if (!v[k] && data[k] && data[k].src === 'gas') await clearData(k);   // 公司不再提供的就移除
+  const need = Object.keys(DS).filter(k => v[k] && (force || !data[k] || data[k].src !== 'gas' || data[k].ver !== v[k]));
+  if (need.length) {
+    say('#cMsg', `正在更新：${need.map(k => DS[k].label).join('、')}…`);
+    const res = await gasCall({ action: 'data', types: need });
+    for (const t of res.tables || []) if (DS[t.type]) await applyData(t.type, parseKnown(t.type, t.rows || []), 'gas', t.version);
+    say('#cMsg', `已更新：${need.map(k => DS[k].label).join('、')}。`);
+  } else say('#cMsg', '公司資料已是最新。');
+  renderData(); recalc(); showCustInfo();
+  return true;
+}
+async function companyStart() {
+  gate('checking');
+  try {
+    if (!window.liff) await loadScript(LIFF_SDK);
+    if (!companyStart.inited) { await window.liff.init({ liffId: company.liffId }); companyStart.inited = true; }
+    if (!window.liff.isLoggedIn()) { gate('login'); return; }
+    await companySync(false);
+  } catch (e) {
+    const st = store.get(CSTATE, {}) || {};
+    const recent = st.user && st.authAt && Date.now() - st.authAt < OFFLINE_DAYS * 864e5;
+    gate('error', { msg: e.message, offline: e.code === 'network' && recent ? st.user : null, relogin: e.code === 'token' });
+  }
+}
+$('#cSync').addEventListener('click', async () => {
+  const b = $('#cSync'); b.disabled = true;
+  try { await companySync(true); } catch (e) { say('#cMsg', e.message, true); }
+  finally { b.disabled = false; }
+});
+$('#cLeave').addEventListener('click', async e => {
+  const b = e.currentTarget;
+  if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = '確定離開？會清除公司資料'; b.classList.add('warn'); setTimeout(() => { delete b.dataset.armed; b.textContent = '離開公司模式'; b.classList.remove('warn'); }, 3000); return; }
+  await wipeCompanyData(); try { localStorage.removeItem(CSTATE); } catch (err) {}
+  location.href = location.pathname;
+});
+
 (async () => {   // 讀取存在這台裝置的資料檔
   for (const k of Object.keys(DS)) { const d = await idb.get(k); if (d && d.count) { data[k] = d; rebuildIndex(k); } }
   updateDerived();
@@ -1390,8 +1580,16 @@ resetForm();
       try { localStorage.removeItem(OLD_PRODKEY); } catch (e) {}
     }
   }
-  renderData(); recalc(); showCustInfo();
-  if (!Object.values(data).some(d => d && d.count)) $('#dataCard').open = true;
+  if (wantsCompany() && (company = await loadCompanyConfig())) {
+    $('#manualData').hidden = true; $('#companyData').hidden = false;
+    renderData();
+    await companyStart();
+  } else {
+    company = null;
+    renderData();
+    if (!Object.values(data).some(d => d && d.count)) $('#dataCard').open = true;
+  }
+  recalc(); showCustInfo();
 })();
 })();
 </script>
