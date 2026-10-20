@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>訂貨單</title>
+<title>訂貨單 v0.1-004</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -44,7 +44,7 @@ main{max-width:1320px;margin:0 auto;display:grid;gap:16px;grid-template-columns:
 .tag{font-size:12px;padding:1px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent)}
 .grow{flex:1}
 
-label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);letter-spacing:.06em;min-width:0}
+label.f,div.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);letter-spacing:.06em;min-width:0}
 input,textarea,button{font:inherit;color:inherit}
 input,textarea,select{background:var(--field);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;min-width:0;color:var(--ink);font-size:15px;letter-spacing:0}
 input:focus,textarea:focus,select:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
@@ -52,7 +52,11 @@ textarea{resize:vertical}
 .fields{display:grid;gap:10px;grid-template-columns:repeat(4,minmax(0,1fr))}
 .fields .w2{grid-column:span 2}
 @media (max-width:640px){.fields{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.roc{font-family:var(--font);color:var(--accent);font-size:12px;letter-spacing:.04em}
+.datebox{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:6px;padding:7px 9px;min-height:38px;cursor:pointer}
+.datebox:focus-within{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.datebox .roc{font-size:15px;color:var(--ink);letter-spacing:.02em}
+.datebox .datehint{font-size:12px;color:var(--accent);letter-spacing:.06em}
+.datebox input{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;cursor:pointer;-webkit-appearance:none;appearance:none}
 
 /* 品項 */
 .items{margin-top:14px;display:flex;flex-direction:column;gap:6px}
@@ -80,7 +84,7 @@ textarea{resize:vertical}
 @media (max-width:640px){
   .ihead{display:none}
   .irow{grid-template-columns:22px minmax(0,1.35fr) repeat(3,minmax(0,1fr));
-    grid-template-areas:"ix no name name name" "ix spec qty price sum" "ix cost cost cost cost" "ix memo memo memo memo" "ix hist hist hist hist";
+    grid-template-areas:"ix no name name name" "ix spec qty price sum" "ix cost cost cost cost" "ix memo memo memo memo" "ix hist hist hist hist" "ix short short short short";
     padding:8px 0;border-bottom:1px solid var(--line)}
   .ix{grid-area:ix;align-self:start;padding-top:8px}
   .c-now{grid-area:no}.c-name{grid-area:name}.c-spec{grid-area:spec}.c-qty{grid-area:qty}.c-price{grid-area:price}.c-sum{grid-area:sum}
@@ -169,10 +173,17 @@ label.f{position:relative}
 label.f #sugg{left:0;top:100%}
 .custinfo{margin-top:10px;font-size:13px;line-height:1.6;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:grid;gap:2px}
 .custinfo span{color:var(--muted);margin-right:6px}
+.c-short{grid-column:2 / -1;grid-row:4;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;background:color-mix(in srgb,var(--danger) 9%,transparent);border:1px solid color-mix(in srgb,var(--danger) 35%,transparent);border-radius:8px;padding:6px 10px;font-size:13px;margin-top:2px}
+.c-short .sh-t{color:var(--danger)}
+.c-short .sh-t b{font-weight:600}
+.c-short .sh-o{display:inline-flex;gap:6px;flex-wrap:wrap}
+.c-short .opt{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:99px;padding:4px 12px;font-size:13px;cursor:pointer}
+.c-short .opt.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.c-short .sh-w{font-size:12px;color:var(--danger)}
 .c-hist{grid-column:2 / -1;grid-row:3;font-size:12px;color:var(--muted);line-height:1.45}
 .c-hist:empty{display:none}
 .c-hist b{font-weight:500;color:var(--ink)}
-@media (max-width:640px){.c-hist{grid-area:hist}}
+@media (max-width:640px){.c-hist{grid-area:hist}.c-short{grid-area:short}}
 
 /* 彈窗 */
 dialog{border:0;padding:0;background:transparent;color:var(--ink);width:min(1000px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px);overflow:visible}
@@ -192,7 +203,7 @@ dialog>.card>.card-head{position:sticky;top:-16px;z-index:5;background:var(--sur
 .badge{display:inline-block;font-size:11px;line-height:1.4;padding:0 6px;border-radius:99px;border:1px solid currentColor;color:var(--danger);margin-left:4px;vertical-align:1px}
 #sugg button.disc .sn{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--muted)}
 /* 銷售記錄查詢 */
-.sqf .sqbtns{display:flex;align-items:flex-end}
+.sqf .sqbtns{display:flex;flex-direction:row;align-items:flex-end}
 .sqsum{font-size:13px;color:var(--muted);margin:12px 0 8px;font-variant-numeric:tabular-nums}
 .sqsum b{color:var(--ink);font-weight:500}
 .sqwrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
@@ -260,6 +271,7 @@ ul.rcv{list-style:none;margin:0;padding:0}
 .gate-id code{font-family:var(--mono);font-size:13px;word-break:break-all;user-select:all;color:var(--ink)}
 .gate-acts{display:flex;flex-direction:column;gap:8px}
 .btn.line{background:#06c755;border-color:#06c755;color:#fff;font-weight:500;padding:11px 16px;font-size:15px}
+.ver{font-family:var(--mono);font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:1px 8px}
 .who{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--accent);background:var(--accent-soft);border-radius:99px;padding:5px 12px}
 .who::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
 .who.off{color:var(--muted);background:var(--field)}
@@ -314,7 +326,7 @@ table.it tr.tot td.cont{font-weight:400;font-size:3mm;letter-spacing:0;text-alig
 <body>
 
 <header class="top">
-  <div class="ttl"><h1 id="appTitle">訂貨單</h1><span class="sub">資料只存在這台裝置的瀏覽器裡</span></div>
+  <div class="ttl"><h1 id="appTitle">訂貨單</h1><span class="ver" id="verTag"></span><span class="sub">資料只存在這台裝置的瀏覽器裡</span></div>
   <div class="toolbar">
     <span class="who" id="whoBadge" hidden></span>
     <button class="btn" id="salesBtn" type="button" hidden>銷售記錄</button>
@@ -408,9 +420,12 @@ table.it tr.tot td.cont{font-weight:400;font-size:3mm;letter-spacing:0;text-alig
       </div>
 
       <div class="fields">
-        <label class="f w2">日期 <span class="roc" id="f_roc"></span>
-          <input type="date" id="f_date">
-        </label>
+        <div class="f w2"><span id="dateLbl">日期</span>
+          <div class="datebox">
+            <span class="roc" id="f_roc"></span><span class="datehint" aria-hidden="true">更改</span>
+            <input type="date" id="f_date" aria-labelledby="dateLbl">
+          </div>
+        </div>
         <div class="f w2 shipf"><span id="shipLbl">運送方法</span>
           <div class="shiprow">
             <select id="f_shipSel" aria-labelledby="shipLbl"><option value="">（未選）</option><option>貨運</option><option>宅配</option><option>自送</option><option value="__other">其他（自行填寫）</option></select>
@@ -579,8 +594,8 @@ function renderItems(items, count) {
       `<input class="c-qty" data-k="qty" inputmode="tel" placeholder="數量" aria-label="第${i + 1}項 數量，可寫 15+1">` +
       `<input class="c-price" data-k="price" inputmode="decimal" placeholder="單價" aria-label="第${i + 1}項 單價">` +
       `<output class="c-sum"></output>` +
-      `<input type="hidden" data-k="cost"><input type="hidden" data-k="memo">` +
-      `<div class="c-memo"></div><div class="c-cost"></div><div class="c-hist"></div></div>`;
+      `<input type="hidden" data-k="cost"><input type="hidden" data-k="memo"><input type="hidden" data-k="short">` +
+      `<div class="c-memo"></div><div class="c-cost"></div><div class="c-hist"></div><div class="c-short" hidden></div></div>`;
   }
   $('#items').innerHTML = h;
   $('#items').querySelectorAll('.irow').forEach((row, i) => {
@@ -595,8 +610,36 @@ function readRows() {
   });
 }
 const filled = it => ['no', 'name', 'spec', 'qty', 'price'].some(k => it[k]);
+/* 庫存不足：數量（含贈品）超過產品檔「目前存量」時，要選出貨方式，選擇寫進備註 */
+const SHORT_OPTS = { partial: '有貨先出', whole: '全到貨一起出' };
+const SHORT_TAG = '【庫存不足】';
+function checkShort(row, it) {
+  const box = row.querySelector('.c-short'), hid = row.querySelector('[data-k="short"]');
+  const p = it.no ? byCode.get(normCode(it.no)) : null, q = parseQty(it.qty);
+  const need = q ? q.paid + q.free : 0;
+  if (!p || !hasStock(p) || !need || need <= stockOf(p)) { box.hidden = true; box.innerHTML = ''; hid.value = ''; return null; }
+  const st = Math.max(0, stockOf(p)), v = hid.value;
+  box.hidden = false;
+  box.innerHTML = `<span class="sh-t">庫存不足：訂 <b>${fmt(need)}</b>，庫存 <b>${fmt(st)}</b>，差 <b>${fmt(need - st)}</b></span>` +
+    `<span class="sh-o">${Object.entries(SHORT_OPTS).map(([k, l]) => `<button type="button" class="opt${v === k ? ' on' : ''}" data-short="${k}" aria-pressed="${v === k}">${l}</button>`).join('')}</span>` +
+    (v ? '' : '<span class="sh-w">請選擇出貨方式</span>');
+  return { no: canonProd(it.no), name: it.name || p.n, need, st, choice: v };
+}
+function syncShortNote(list) {
+  const ta = F('note'), keep = ta.value.split('\n').filter(l => !l.startsWith(SHORT_TAG));
+  while (keep.length && !keep[keep.length - 1].trim()) keep.pop();
+  const add = list.filter(x => x.choice).map(x => `${SHORT_TAG}${x.no} ${x.name}：訂${fmt(x.need)}、庫存${fmt(x.st)} → ${SHORT_OPTS[x.choice]}`);
+  const next = [...keep, ...add].join('\n');
+  if (next !== ta.value) ta.value = next;
+}
+$('#items').addEventListener('click', e => {
+  const b = e.target.closest('[data-short]'); if (!b) return;
+  b.closest('.irow').querySelector('[data-k="short"]').value = b.dataset.short;
+  recalc();
+});
+
 function recalc() {
-  let total = 0, profit = 0, cost = 0, has = false;
+  let total = 0, profit = 0, cost = 0, has = false; const shorts = [];
   $('#items').querySelectorAll('.irow').forEach(row => {
     const it = {}; row.querySelectorAll('input').forEach(inp => { it[inp.dataset.k] = inp.value; });
     const a = amount(it); row.querySelector('.c-sum').textContent = fmt(a); total += a || 0;
@@ -604,13 +647,14 @@ function recalc() {
     const up = unitProfitOf(it), neg = v => v < 0 ? 'neg' : '';
     row.querySelector('.c-cost').innerHTML = c == null ? '' :
       `<span>成本 ${fmt(c)}元</span>` +
-      (up ? `<span>單位利潤 <b class="${neg(up.profit)}">${money(up.profit)}元 ${pct(up.rate)}</b></span>` : '') +
-      (pr ? `<span>總利潤 <b class="${neg(pr.profit)}">${money(pr.profit)}元 ${pct(pr.rate)}</b>${pr.units !== 1 ? `（${fmt(pr.units)}個）` : ''}</span>` : '');
+      (up ? `<span>單位利潤 <b class="${neg(up.profit)}">${money(up.profit)}元 ${pct(up.rate)}</b></span>` : '');
     row.querySelector('.c-memo').textContent = it.memo ? `Memo：${it.memo}` : '';
     row.querySelector('.c-hist').innerHTML = histHTML(it.no);
+    shorts.push(checkShort(row, it));
     if (pr) { profit += pr.profit; cost += pr.totalCost; has = true; }
   });
   $('#f_total').textContent = fmt(total);
+  syncShortNote(shorts.filter(Boolean));
   $('#f_profit').innerHTML = has ? `整張訂單利潤 <b class="${profit < 0 ? 'neg' : ''}">${money(profit)}元 ${pct(cost ? profit / cost * 100 : null)}</b>` : '';
 }
 function updateRoc() { F('roc').textContent = rocText(F('date').value || todayISO()); }
@@ -621,9 +665,10 @@ function fillForm(o) {
   renderItems(o.items || [], ROWS);
   updateRoc(); updateTitle(); showCustInfo(); syncShipUI();
 }
+const APP_VERSION = 'v0.1-004';   // 版本號-版次：每次更新把最後的版次 +1
 function updateTitle() {
   const t = (F('company').value.trim() || '') + '訂貨單';
-  $('#appTitle').textContent = t; document.title = t;
+  $('#appTitle').textContent = t; document.title = `${t} ${APP_VERSION}`; $('#verTag').textContent = APP_VERSION;
 }
 function resetForm() {
   editingId = null;
@@ -645,6 +690,8 @@ function readForm() {
 function save() {
   const o = readForm();
   if (!o.items.length) { say('#status', '請至少填一個品項。', true); return; }
+  const pending = [...$('#items').querySelectorAll('.c-short:not([hidden])')].find(b => !b.closest('.irow').querySelector('[data-k="short"]').value);
+  if (pending) { say('#status', '有品項庫存不足，請先選擇「有貨先出」或「全到貨一起出」。', true); pending.scrollIntoView({ block: 'center' }); return; }
   if (!o.custName && !o.custNo) { say('#status', '請填客戶編號或客戶名稱。', true); F('custName').focus(); return; }
   if (editingId) {
     const i = orders.findIndex(x => x.id === editingId);
@@ -1183,7 +1230,7 @@ const productRow = p => {
 const discCls = p => isDisc(p) ? 'disc' : '';
 $('#items').addEventListener('input', e => {
   const k = e.target.dataset.k, row = e.target.closest('.irow');
-  if (k === 'no') { row.querySelector('[data-k="cost"]').value = ''; row.querySelector('[data-k="memo"]').value = ''; }
+  if (k === 'no') { ['cost', 'memo', 'short'].forEach(x => { row.querySelector(`[data-k="${x}"]`).value = ''; }); }
   recalc();
   if ((k === 'no' || k === 'name') && (products.length || lastSale.size)) {
     const v = e.target.value.trim();
@@ -1246,6 +1293,7 @@ F('line').addEventListener('change', () => {
 });
 
 F('date').addEventListener('input', updateRoc);
+F('date').addEventListener('click', e => { try { e.target.showPicker(); } catch (err) { /* 手機會自己跳出日期選擇器 */ } });
 F('company').addEventListener('input', updateTitle);
 $('#addRows').addEventListener('click', () => {
   renderItems(readRows(), rowCount + ROWS);
